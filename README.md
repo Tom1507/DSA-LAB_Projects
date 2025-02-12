@@ -32,7 +32,7 @@ with the boundary wall or the snake's body itself.
 ## 💻 **How to Run the Game**
 
 1. **Download and Install a C++ Compiler**:
-   - Make sure you have a C++ compiler installed. You can use **GCC** for MacOS or **MinGW** for Windows.
+   - Make sure you have a C++ compiler installed.You can use **GCC** for MacOS.
 
 2. **Clone or Download the Repository**:
    - You can download the source code from this repository to your local machine and enjoy playing the game offline.
@@ -50,12 +50,6 @@ with the boundary wall or the snake's body itself.
      ```
      ./SnakeGame
      ```
-
----
-
-## 💡 **Windows Users**
-If you're on Windows, you can use **MinGW** to compile and run the game. Ensure your command prompt supports **ANSI escape sequences** for colored output.
-
 ---
 
 ## 🛠️ **Game Instructions**
@@ -64,11 +58,11 @@ If you're on Windows, you can use **MinGW** to compile and run the game. Ensure 
    - Press any key to start the game after the initial prompt.
 
 2. **Game Over Screen**:
-   - If you hit the wall or your own body, the game will end.
+   - The game will end if you hit the wall or your body.
    - You can **Press `R` to Restart** or **Press `Q` to Quit**.
 
 3. **Scores**:
-   - Your current score and high score will be displayed at the top of the screen.
+   - Your current score and your high score will be displayed at the top of the screen.
 
 ---
 
@@ -106,7 +100,6 @@ This project is licensed under the MIT License.
 ## 🔧 **Troubleshooting**
 
 - If you face any issues with **keyboard input**, ensure your terminal supports non-blocking input handling.
-- For Windows users, ensure **`_kbhit()`** and **`_getch()`** are supported by your compiler.
 
 ---
 
