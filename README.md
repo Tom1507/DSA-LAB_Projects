@@ -1,11 +1,11 @@
-# 🐍 Snake Game
+# 🐍🐍 Snake Game 🐍🐍
 
 Welcome to the **Snake Game** built using C++! This is a fun and interactive text-based game where you control the snake and try to eat food while avoiding collisions 
 with the boundary wall or the snake's body itself.
 
 ---
 
-## ✨ **How to Play**
+##  **How to Play**
 
 - **Controls**:
   - **W** = Up
@@ -42,7 +42,7 @@ with the boundary wall or the snake's body itself.
    - Navigate to the folder where the file is located.
    - Run the following command:
      ```
-     g++ -o SnakeGame SnakeGame.cpp
+     g++ -std=c++11 -Wall -o Snake_Game Snake_Game.cpp
      ```
 
 4. **Run the Game**:
@@ -52,7 +52,7 @@ with the boundary wall or the snake's body itself.
      ```
 ---
 
-## 🛠️ **Game Instructions**
+##  **Game Instructions**
 
 1. **Start the Game**:
    - Press any key to start the game after the initial prompt.
@@ -62,11 +62,11 @@ with the boundary wall or the snake's body itself.
    - You can **Press `R` to Restart** or **Press `Q` to Quit**.
 
 3. **Scores**:
-   - Your current score and your high score will be displayed at the top of the screen.
+   - Your current score and high scores will be displayed at the top of the screen.
 
 ---
 
-## 🌈 **Customization**
+##  **Customization**
 
 The game uses ANSI escape sequences to add colors to the terminal:
 
@@ -77,7 +77,7 @@ The game uses ANSI escape sequences to add colors to the terminal:
 ---
 
 
-## 💬 **Contributors**
+## **Contributors**
 
 - **Rushil**
 - **Vishwam**
