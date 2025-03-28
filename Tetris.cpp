@@ -91,7 +91,7 @@ public:
 
     void rotatePiece() {
         auto rotated = currentPiece;
-        reverse(rotated.begin(), rotated.end());
+        //reverse(rotated.begin(), rotated.end());
         
         auto temp = vector<vector<int>>(
             rotated[0].size(), 
