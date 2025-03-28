@@ -189,19 +189,19 @@ public:
 
 int main() {
     // Initialize ncurses
-    initscr();
-    cbreak();
-    noecho();
-    keypad(stdscr, TRUE);
-    curs_set(0);
+    initscr(); // start ncurses mode
+    cbreak();  // proceed without waiting for enter key
+    noecho();  // prevent input from appearing
+    keypad(stdscr, TRUE);  // standard inputs like wasd and arrow keys 
+    curs_set(0);  // do not blink the cursor
     
     // Create game window
-    WINDOW* gameWin = newwin(HEIGHT + 2, WIDTH + 2, 2, 10);
-    keypad(gameWin, TRUE);
-    nodelay(gameWin, TRUE);
+    WINDOW* gameWin = newwin(HEIGHT + 2, WIDTH + 2, 2, 10);  // print boarder of game
+    keypad(gameWin, TRUE);  
+    nodelay(gameWin, TRUE);  // do not wait for input
     
     // Seed random number generator
-    srand(time(NULL));
+    srand(time(NULL));  // seed random number generator
     
     Tetris game;
     
@@ -243,7 +243,15 @@ int main() {
         }
         
         // Control game speed
+        if(game.getScore() < 200 && game.getScore() >= 0){
         napms(20);
+        }
+        else if(game.getScore() >= 200 && game.getScore() < 500){
+            napms(15);
+        }
+        else{
+            napms(10);
+        }
     }
 
     // Clean up ncurses
