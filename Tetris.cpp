@@ -1,352 +1,256 @@
 #include <iostream>
-#include <cstdlib>
-#include <ctime>
+#include <vector>
+#include <random>
+#include <algorithm>
+#include <ncurses.h>
 #include <termios.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
-
-const int BOARD_MAX_WIDTH = 40;
-const int BOARD_MAX_HEIGHT = 20;
+#include <fcntl.h>
 
 using namespace std;
 
-// Define the shapes
-bool Shapes[4][4][4][4] = {
-    // I
-    {
-        {{0, 0, 0, 1}, {0, 0, 0, 1}, {0, 0, 0, 1}, {0, 0, 0, 1}},
-        {{0, 0, 0, 0}, {1, 1, 1, 1}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-        {{0, 0, 0, 1}, {0, 0, 0, 1}, {0, 0, 0, 1}, {0, 0, 0, 1}},
-        {{0, 0, 0, 0}, {1, 1, 1, 1}, {0, 0, 0, 0}, {0, 0, 0, 0}}
-    },
-    // L
-    {
-        {{0, 0, 1, 0}, {0, 0, 1, 0}, {0, 0, 1, 1}, {0, 0, 0, 0}},
-        {{0, 0, 0, 0}, {0, 1, 1, 1}, {0, 1, 0, 0}, {0, 0, 0, 0}},
-        {{0, 0, 0, 0}, {0, 0, 1, 1}, {0, 0, 0, 1}, {0, 0, 0, 1}},
-        {{0, 0, 0, 0}, {0, 0, 0, 1}, {0, 1, 1, 1}, {0, 0, 0, 0}}
-    },
-    // N
-    {
-        {{0, 0, 0, 0}, {0, 1, 1, 0}, {0, 0, 1, 1}, {0, 0, 0, 0}},
-        {{0, 0, 0, 1}, {0, 0, 1, 1}, {0, 0, 1, 0}, {0, 0, 0, 0}},
-        {{0, 0, 0, 0}, {0, 1, 1, 0}, {0, 0, 1, 1}, {0, 0, 0, 0}},
-        {{0, 0, 0, 1}, {0, 0, 1, 1}, {0, 0, 1, 0}, {0, 0, 0, 0}}
-    },
-    // Square
-    {
-        {{0, 0, 0, 0}, {0, 0, 1, 1}, {0, 0, 1, 1}, {0, 0, 0, 0}},
-        {{0, 0, 0, 0}, {0, 0, 1, 1}, {0, 0, 1, 1}, {0, 0, 0, 0}},
-        {{0, 0, 0, 0}, {0, 0, 1, 1}, {0, 0, 1, 1}, {0, 0, 0, 0}},
-        {{0, 0, 0, 0}, {0, 0, 1, 1}, {0, 0, 1, 1}, {0, 0, 0, 0}}
-    }
-};
+const int WIDTH = 12;  
+const int HEIGHT = 24; 
 
-// Mac compatibility functions
-void gotoxy(int x, int y) {
-    printf("\033[%d;%dH", y + 1, x + 1);
-}
 
-void setColor(int ForgC) {
-    printf("\033[3%dm", ForgC % 8); // Basic 8 colors
-}
-
-int getch_mac() {
-    struct termios oldattr, newattr;
+int kbhit() {
+    struct termios oldt, newt;
     int ch;
-    tcgetattr(STDIN_FILENO, &oldattr);
-    newattr = oldattr;
-    newattr.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newattr);
+    int oldf;
+
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+
     ch = getchar();
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldattr);
-    return ch;
-}
 
-bool kbhit_mac() {
-    struct termios oldattr, newattr;
-    int ch;
-    tcgetattr(STDIN_FILENO, &oldattr);
-    newattr = oldattr;
-    newattr.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newattr);
-    ioctl(STDIN_FILENO, FIONREAD, &ch);
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldattr);
-    return ch != 0;
-}
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    fcntl(STDIN_FILENO, F_SETFL, oldf);
 
-void printMargin(bool **board) {
-    setColor(0);
-    char block = 219;
-    for (int i = 0; i <= BOARD_MAX_WIDTH; i++) {
-        gotoxy(i, 0);
-        cout << block;
-        gotoxy(i, BOARD_MAX_HEIGHT + 1);
-        cout << block;
-        board[0][i] = true;
-        board[BOARD_MAX_HEIGHT + 1][i] = true;
+    if (ch != EOF) {
+        ungetc(ch, stdin);
+        return 1;
     }
-    for (int j = 0; j <= BOARD_MAX_HEIGHT + 1; j++) {
-        gotoxy(BOARD_MAX_WIDTH + 1, j);
-        cout << block;
-        board[j][BOARD_MAX_WIDTH + 1] = true;
-    }
+    return 0;
 }
 
-void printShape(bool a[4][4][4][4], int kind, int rotation, int x, int y, bool **board) {
-    int startX = x;
-    char block = 254;
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            if (a[kind][rotation][i][j]) {
-                gotoxy(x, y);
-                cout << block;
-                if (y >= 0 && y <= BOARD_MAX_HEIGHT && x >= 0 && x <= BOARD_MAX_WIDTH) {
-                    board[y][x] = true;
-                }
-            }
-            x++;
-        }
-        y++;
-        x = startX;
-    }
-}
+class Tetris {
+private:
+    const vector<vector<vector<int>>> SHAPES = {
+        {{1,1,1,1}},           // I-piece
+        {{1,1},{1,1}},         // O-piece
+        {{1,1,1},{0,1,0}},     // T-piece
+        {{1,1,1},{1,0,0}},     // L-piece
+        {{1,1,1},{0,0,1}},     // J-piece
+        {{1,1,0},{0,1,1}},     // Z-piece
+        {{0,1,1},{1,1,0}}      // S-piece
+    };
 
-void deleteShape(bool a[4][4][4][4], int kind, int rotation, int x, int y, bool **board) {
-    int startX = x;
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            if (a[kind][rotation][i][j]) {
-                gotoxy(x, y);
-                cout << " ";
-                if (y >= 0 && y <= BOARD_MAX_HEIGHT && x >= 0 && x <= BOARD_MAX_WIDTH) {
-                    board[y][x] = false;
-                }
-            }
-            x++;
-        }
-        y++;
-        x = startX;
-    }
-}
+    vector<vector<int>> board;
+    vector<vector<int>> currentPiece;
+    int currentX = 0, currentY = 0;
+    int score = 0;
+    random_device rd;
+    mt19937 gen;
 
-void gameExit() {
-    system("clear");
-    gotoxy(10, 10);
-    cout << "********** OUCH !!  **********";
-    usleep(1500000); // microseconds
-    system("clear");
-    char sound = 7;
-    setColor(0);
-    for (int i = 0, j = 0; j < 20 && i < 40; i++, j++) {
-        gotoxy(i, j);
-        cout << "**********LOSER***********";
-        gotoxy(i, j + 2);
-        cout << "*******Game is Over*******";
-        setColor(0);
-        usleep(50000);
-        system("clear");
+public:
+    Tetris() : board(HEIGHT, vector<int>(WIDTH, 0)), gen(rd()) {
+        newPiece();
     }
-    gotoxy(20, 20);
-    cout << "**********LOSER***********";
-    gotoxy(20, 22);
-    cout << "*******Game is Over*******";
-    getchar();
-    exit(1);
-}
 
-bool checkCollision(bool a[4][4][4][4], int kind, int rotation, int x, int y, bool **board) {
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            if (a[kind][rotation][i][j]) {
-                int boardX = x + j;
-                int boardY = y + i;
-                if (boardY > BOARD_MAX_HEIGHT || board[boardY][boardX]) {
-                    return true;
+    bool newPiece() {
+        uniform_int_distribution<> dis(0, SHAPES.size() - 1);
+        currentPiece = SHAPES[dis(gen)];
+        
+        currentX = WIDTH / 2 - currentPiece[0].size() / 2;
+        currentY = 0;
+
+        return !checkCollision();
+    }
+
+    bool checkCollision() {
+        for (size_t y = 0; y < currentPiece.size(); ++y) {
+            for (size_t x = 0; x < currentPiece[y].size(); ++x) {
+                if (currentPiece[y][x]) {
+                    int boardX = currentX + x;
+                    int boardY = currentY + y;
+
+                    if (boardX < 0 || boardX >= WIDTH || boardY >= HEIGHT) 
+                        return true;
+
+                    if (boardY >= 0 && board[boardY][boardX]) 
+                        return true;
                 }
             }
         }
+        return false;
     }
-    return false;
-}
 
-bool checkFreeRight(bool a[4][4][4][4], int kind, int rotation, int x, int y, bool **board) {
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            if (a[kind][rotation][i][j]) {
-                int boardX = x + j + 1;
-                int boardY = y + i;
-                if (boardX > BOARD_MAX_WIDTH || board[boardY][boardX]) {
-                    return false;
+    void rotatePiece() {
+        auto rotated = currentPiece;
+        reverse(rotated.begin(), rotated.end());
+        
+        auto temp = vector<vector<int>>(
+            rotated[0].size(), 
+            vector<int>(rotated.size())
+        );
+        
+        for (size_t i = 0; i < rotated.size(); ++i) {
+            for (size_t j = 0; j < rotated[0].size(); ++j) {
+                temp[j][rotated.size() - 1 - i] = rotated[i][j];
+            }
+        }
+        
+        auto oldPiece = currentPiece;
+        currentPiece = temp;
+
+        if (checkCollision()) 
+            currentPiece = oldPiece;
+    }
+
+    bool movePiece(int dx, int dy) {
+        currentX += dx;
+        currentY += dy;
+
+        if (checkCollision()) {
+            currentX -= dx;
+            currentY -= dy;
+
+            if (dy > 0) {
+                lockPiece();
+                clearLines();
+                return newPiece();
+            }
+            return false;
+        }
+        return true;
+    }
+
+    void lockPiece() {
+        for (size_t y = 0; y < currentPiece.size(); ++y) {
+            for (size_t x = 0; x < currentPiece[y].size(); ++x) {
+                if (currentPiece[y][x] && currentY + y >= 0) {
+                    board[currentY + y][currentX + x] = 1;
                 }
             }
         }
     }
-    return true;
-}
 
-bool checkFreeLeft(bool a[4][4][4][4], int kind, int rotation, int x, int y, bool **board) {
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            if (a[kind][rotation][i][j]) {
-                int boardX = x + j - 1;
-                int boardY = y + i;
-                if (boardX < 0 || board[boardY][boardX]) {
-                    return false;
-                }
+    void clearLines() {
+        for (int y = HEIGHT - 1; y >= 0; --y) {
+            if (all_of(board[y].begin(), board[y].end(), [](int cell) { return cell; })) {
+                board.erase(board.begin() + y);
+                board.insert(board.begin(), vector<int>(WIDTH, 0));
+                score += 100;
+                y++;
             }
         }
     }
-    return true;
-}
 
-bool checkFreeDown(bool a[4][4][4][4], int kind, int rotation, int x, int y, bool **board) {
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            if (a[kind][rotation][i][j]) {
-                int boardX = x + j;
-                int boardY = y + i + 1;
-                if (boardY > BOARD_MAX_HEIGHT || board[boardY][boardX]) {
-                    return false;
+    void draw(WINDOW* win) {
+        wclear(win);
+
+        // Draw board border
+        box(win, 0, 0);
+
+        // Draw board
+        for (int y = 0; y < HEIGHT; ++y) {
+            for (int x = 0; x < WIDTH; ++x) {
+                if (board[y][x]) {
+                    mvwaddch(win, y+1, x+1, '#');
                 }
             }
         }
-    }
-    return true;
-}
 
-void gameHeadStart() {
-    setColor(6);
-    char sound = 7;
-    char pointer = 175;
-    gotoxy(20, 10);
-    cout << " ---------->  WELCOME  <----------";
-    usleep(2000000);
-    system("clear");
-    gotoxy(0, 0);
-    cout << pointer << "  This is the Tetris game made by -> ATTA JIROFTY <- " << endl;
-    usleep(1000000);
-    gotoxy(0, 3);
-    cout << pointer << "  This game is protected by ** Copyright ( C ) **" << endl;
-    usleep(1000000);
-    gotoxy(0, 6);
-    cout << pointer << "  Please press a key to start the game." << endl;
-    getchar();
-    gotoxy(0, 8);
-    cout << "************************GET READY************************" << endl;
-    gotoxy(10, 10);
-    cout << '1' << sound << endl;
-    usleep(1000000);
-    gotoxy(10, 12);
-    cout << '2' << sound << endl;
-    usleep(1000000);
-    gotoxy(10, 14);
-    cout << '3' << sound << endl;
-    usleep(1000000);
-    cout << sound << sound << sound;
-    system("clear");
-    gotoxy(20, 10);
-    cout << "*************** -> GO GO GO <-   ***************";
-    usleep(1000000);
-}
-
-void gameHelp() {
-    char pointer = 175;
-    char design = 178;
-    gotoxy(BOARD_MAX_WIDTH + 3, 0);
-    cout << pointer << "  Use 'w' key for up (rotate)";
-    gotoxy(BOARD_MAX_WIDTH + 3, 1);
-    cout << pointer << "  Use 's' key for down (faster drop)";
-    gotoxy(BOARD_MAX_WIDTH + 3, 2);
-    cout << pointer << "  Use 'a' key for left";
-    gotoxy(BOARD_MAX_WIDTH + 3, 3);
-    cout << pointer << "  Use 'd' key for right";
-    gotoxy(BOARD_MAX_WIDTH + 3, 4);
-    cout << pointer << "  Use 'enter' for Ending the game";
-    gotoxy(BOARD_MAX_WIDTH + 3, 7);
-    cout << design << "  ENJOY THE GAME  " << design;
-    gotoxy(0, BOARD_MAX_HEIGHT + 3);
-    cout << "Made in Yazd University - Computer Engineering Faculty ";
-}
-
-void levelPrint(int score) {
-    gotoxy(BOARD_MAX_WIDTH + 3, 12);
-    if (score < 200) {
-        cout << "LEVEL 1      ";
-    } else if (score < 500) {
-        cout << "LEVEL 2      ";
-    } else if (score < 800) {
-        cout << "LEVEL 3      ";
-    } else {
-        cout << "LEVEL 4 BRAVO!!";
-    }
-}
-
-void clearFilledLines(bool **board, int &score) {
-    for (int i = 1; i <= BOARD_MAX_HEIGHT; i++) {
-        bool filled = true;
-        for (int j = 1; j <= BOARD_MAX_WIDTH; j++) {
-            if (!board[i][j]) {
-                filled = false;
-                break;
-            }
-        }
-        if (filled) {
-            score += 100;
-            for (int k = i; k > 1; k--) {
-                for (int l = 1; l <= BOARD_MAX_WIDTH; l++) {
-                    board[k][l] = board[k - 1][l];
-                }
-            }
-            for (int l = 1; l <= BOARD_MAX_WIDTH; l++) {
-                board[1][l] = false;
-            }
-            // Redraw the board
-            for (int r = 1; r <= BOARD_MAX_HEIGHT; r++) {
-                for (int c = 1; c <= BOARD_MAX_WIDTH; c++) {
-                    gotoxy(c, r);
-                    if (board[r][c]) {
-                        cout << (char)254;
-                    } else {
-                        cout << " ";
+        // Draw current piece
+        for (size_t y = 0; y < currentPiece.size(); ++y) {
+            for (size_t x = 0; x < currentPiece[y].size(); ++x) {
+                if (currentPiece[y][x]) {
+                    int boardX = currentX + x;
+                    int boardY = currentY + y;
+                    if (boardY >= 0) {
+                        mvwaddch(win, boardY+1, boardX+1, '#');
                     }
                 }
             }
         }
+
+        // Draw score
+        mvwprintw(win, 0, 1, "Score: %d", score);
+        
+        wrefresh(win);
     }
-}
+
+    int getScore() const { return score; }
+};
 
 int main() {
-    char ch1 = 0;
-    gameHeadStart();
-    bool is_free = true;
-    bool is_over = false;
-    int score = 0;
-    int sleep_time = 100000; // microseconds (0.1 seconds)
-    int fast_forward_sleep = 10000; // microseconds (0.01 seconds)
-    system("clear");
-    bool **board = new bool *[BOARD_MAX_HEIGHT + 2];
-    for (int i = 0; i <= BOARD_MAX_HEIGHT + 1; i++)
-        board[i] = new bool[BOARD_MAX_WIDTH + 2];
-    for (int i = 0; i <= BOARD_MAX_HEIGHT + 1; i++) {
-        for (int j = 0; j <= BOARD_MAX_WIDTH + 1; j++)
-            board[i][j] = false;
+    // Initialize ncurses
+    initscr();
+    cbreak();
+    noecho();
+    keypad(stdscr, TRUE);
+    curs_set(0);
+    
+    // Create game window
+    WINDOW* gameWin = newwin(HEIGHT + 2, WIDTH + 2, 2, 10);
+    keypad(gameWin, TRUE);
+    nodelay(gameWin, TRUE);
+    
+    // Seed random number generator
+    srand(time(NULL));
+    
+    Tetris game;
+    
+    int ch;
+    bool gameOver = false;
+    int dropCounter = 0;
+    
+    while (!gameOver) {
+        // Draw the game
+        game.draw(gameWin);
+        
+        // Handle input
+        if (kbhit()) {
+            ch = getchar();
+            switch (ch) {
+                case 'q':
+                    gameOver = true;
+                    break;
+                case 'a':
+                    game.movePiece(-1, 0);
+                    break;
+                case 'd':
+                    game.movePiece(1, 0);
+                    break;
+                case 's':
+                    game.movePiece(0, 1);
+                    break;
+                case 'w':
+                    game.rotatePiece();
+                    break;
+            }
+        }
+        
+        // Automatic move down
+        dropCounter++;
+        if (dropCounter >= 20) {
+            game.movePiece(0, 1);
+            dropCounter = 0;
+        }
+        
+        // Control game speed
+        napms(20);
     }
-    printMargin(board);
-    gameHelp();
-    system("clear && printf '\\e[35m'"); // Set color to magenta
 
-    srand(time(0));
+    // Clean up ncurses
+    endwin();
+    
+    // Display final score
+    cout << "Game Over! Final Score: " << game.getScore() << endl;
 
-    while (true) {
-        gotoxy(BOARD_MAX_WIDTH + 3, 10);
-        cout << "SCORE :  " << score;
-        if (score > 200)
-            sleep_time = 70000;
-        if (score > 500)
-            sleep_time = 40000;
-        if (score > 800)
-            sleep_time = 30000;
-        levelPrint(score);
-    }
+    return 0;
 }
