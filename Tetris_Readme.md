@@ -28,7 +28,7 @@
 ## Compilation & Execution
 To compile the game, run the following command in the terminal:
 ```sh
- g++ tetris.cpp -o tetris
+ g++ tetris.cpp -o tetris-lncurses
 ```
 
 Then, execute the game using:
