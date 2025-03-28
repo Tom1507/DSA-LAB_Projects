@@ -226,10 +226,10 @@ int main() {
                 case 'd':
                     game.movePiece(1, 0);
                     break;
-                case 's':
+                case ' ':
                     game.movePiece(0, 1);
                     break;
-                case 'w':
+                case 'r':
                     game.rotatePiece();
                     break;
             }
