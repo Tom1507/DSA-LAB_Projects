@@ -2,10 +2,10 @@
 
 ## Features
 - **Classic Tetris Gameplay**: Rotate, move, and drop tetrominoes to form complete lines.
-- **Multiple Tetromino Shapes**: Includes I, L, N, and Square shapes.
+- **Multiple Tetromino Shapes**: Includes I, L, S, Z, J, T and O shapes.
 - **Collision Detection**: Ensures blocks fit within the board and stack properly.
-- **Scoring System**: Earn points by completing lines.
-- **Level Progression**: The game speeds up as you score higher.
+- **Scoring System**: Earn 100 points on completing a line.
+- ( Tentative : **Level Progression**: The game speeds up as you score higher.)
 - **Simple ASCII Graphics**: Runs entirely in the terminal.
 - **Cross-Platform Compatibility**: Designed for UNIX-like systems (Linux/macOS).
 
@@ -16,11 +16,10 @@
    - `A` - Move left
    - `D` - Move right
    - `S` - Move down faster
-   - `Enter` - End the game
+   - `Q` - End the game
 3. Try to fit the tetrominoes to complete horizontal lines.
 4. Each completed line increases your score.
-5. As your score increases, the game speeds up.
-6. The game ends when a new shape cannot be placed without collision.
+5. The game ends when a new shape cannot be placed without collision.
 
 ## Requirements
 - C++ compiler (G++ recommended)
@@ -39,11 +38,11 @@ Then, execute the game using:
 
 ## Notes
 - Windows users may need to modify terminal-specific functions (like `gotoxy` and `kbhit`).
-- The game automatically increases speed as the score increases.
 - The game ends when a shape cannot be placed without collision.
 
-## Author
-This project was created by **Atta Jirofty** as a simple terminal-based Tetris implementation.
-
-## License
-This project is protected by copyright. Use for educational purposes only.
+## Creators
+- CODE CRUSADERS
+- Vishwam
+- Lakshya
+- Dev
+- Rushil
