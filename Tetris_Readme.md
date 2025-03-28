@@ -5,7 +5,7 @@
 - **Multiple Tetromino Shapes**: Includes I, L, S, Z, J, T and O shapes.
 - **Collision Detection**: Ensures blocks fit within the board and stack properly.
 - **Scoring System**: Earn 100 points on completing a line.
-- ( Tentative : **Level Progression**: The game speeds up as you score higher.)
+- **Level Progression**: The game speeds up as you score higher.
 - **Simple ASCII Graphics**: Runs entirely in the terminal.
 - **Cross-Platform Compatibility**: Designed for UNIX-like systems (Linux/macOS).
 
