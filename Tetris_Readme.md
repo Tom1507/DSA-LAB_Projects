@@ -12,10 +12,10 @@
 ## How to Play
 1. Start the game by running the compiled executable.
 2. Use the following controls to play:
-   - `W` - Rotate the shape
+   - `R` - Rotate the shape
    - `A` - Move left
    - `D` - Move right
-   - `S` - Move down faster
+   - ` ` - Move down faster(space)
    - `Q` - End the game
 3. Try to fit the tetrominoes to complete horizontal lines.
 4. Each completed line increases your score.
