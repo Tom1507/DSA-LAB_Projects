@@ -244,13 +244,13 @@ int main() {
         
         // Control game speed
         if(game.getScore() < 200 && game.getScore() >= 0){
-        napms(20);
+        napms(16);
         }
         else if(game.getScore() >= 200 && game.getScore() < 500){
-            napms(15);
+            napms(12);
         }
         else{
-            napms(10);
+            napms(8);
         }
     }
 
